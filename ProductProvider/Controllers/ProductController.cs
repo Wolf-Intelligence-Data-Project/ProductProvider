@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProductProvider.Interfaces;
-using ProductProvider.Services;
 
 namespace ProductProvider.Controllers;
 
