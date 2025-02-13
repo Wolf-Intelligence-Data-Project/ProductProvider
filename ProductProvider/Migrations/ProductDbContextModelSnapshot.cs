@@ -60,7 +60,7 @@ namespace ProductProvider.Migrations
 
                     b.Property<string>("OrganizationNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -81,9 +81,6 @@ namespace ProductProvider.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizationNumber")
-                        .IsUnique();
 
                     b.ToTable("Products");
                 });

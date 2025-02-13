@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using ProductProvider.Controllers.GraphQL;
+using ProductProvider.GraphQL;
 using ProductProvider.Interfaces;
 using ProductProvider.Models.Data;
 using ProductProvider.Repositories;
+using ProductProvider.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,11 +14,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register repositories and services
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
+
+// Set up DbContext with SQL Server
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ProductDatabase")));
 
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
+// Add GraphQL services
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<ProductQuery>();

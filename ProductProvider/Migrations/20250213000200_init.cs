@@ -18,7 +18,7 @@ namespace ProductProvider.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OrganizationNumber = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    OrganizationNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     City = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -35,12 +35,6 @@ namespace ProductProvider.Migrations
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Products_OrganizationNumber",
-                table: "Products",
-                column: "OrganizationNumber",
-                unique: true);
         }
 
         /// <inheritdoc />

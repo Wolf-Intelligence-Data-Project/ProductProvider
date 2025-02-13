@@ -12,7 +12,7 @@ using ProductProvider.Models.Data;
 namespace ProductProvider.Migrations
 {
     [DbContext(typeof(ProductDbContext))]
-    [Migration("20250212233849_init")]
+    [Migration("20250213000200_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -63,7 +63,7 @@ namespace ProductProvider.Migrations
 
                     b.Property<string>("OrganizationNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -84,9 +84,6 @@ namespace ProductProvider.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizationNumber")
-                        .IsUnique();
 
                     b.ToTable("Products");
                 });

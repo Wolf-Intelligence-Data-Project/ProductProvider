@@ -4,6 +4,15 @@ namespace ProductProvider.Interfaces;
 
 public interface IProductRepository
 {
-    Task<IEnumerable<ProductEntity>> GetAllProductsAsync();
-    Task<IEnumerable<ProductEntity>> GetFilteredProductsAsync(string? search, string? businessType);
+    Task<IEnumerable<ProductEntity>> GetFilteredProductsAsync(
+        string? search = null,
+        string? businessType = null,
+        string? address = null,
+        string? postalCode = null,
+        string? city = null,
+        string? phoneNumber = null,
+        string? email = null,
+        string? revenue = null,
+        string? numberOfEmployees = null,
+        string? ceo = null);
 }
