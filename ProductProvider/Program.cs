@@ -1,22 +1,29 @@
 using Microsoft.EntityFrameworkCore;
+using ProductProvider.Repositories;
 using ProductProvider.GraphQL;
 using ProductProvider.Interfaces;
 using ProductProvider.Models.Data;
-using ProductProvider.Repositories;
 using ProductProvider.Services;
+using ProductProvider.Messages;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
+// Configure Swagger/OpenAPI (optional)
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen();
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 50 * 1024 * 1024; // 50MB limit
+});
 // Register repositories and services
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IMessageBus, RabbitMQMessageBus>(); // Register IMessageBus with RabbitMQMessageBus
 
 // Set up DbContext with SQL Server
 builder.Services.AddDbContext<ProductDbContext>(options =>

@@ -1,35 +1,45 @@
-﻿using ProductProvider.Models.Data.Entities;
+﻿using GraphQL;
+using GraphQL.Types;
+using ProductProvider.Interfaces;
+using ProductProvider.Models;
+using ProductProvider.Models.Data.Entities;
 using ProductProvider.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace ProductProvider.GraphQL;
-
-public class ProductQuery
+namespace ProductProvider.GraphQL
 {
-    private readonly ProductService _productService;
-
-    // Inject ProductService for filtering and retrieving product data
-    public ProductQuery(ProductService productService)
+    public class ProductQuery : ObjectGraphType
     {
-        _productService = productService;
+        public ProductQuery(IProductService productService)
+        {
+            Field<ListGraphType<ProductType>>(
+                "products",
+                arguments: new QueryArguments(
+                    new QueryArgument<IntGraphType> { Name = "quantity" },
+                    new QueryArgument<StringGraphType> { Name = "companyName" }
+                ),
+                resolve: context =>
+                {
+                    var quantity = context.GetArgument<int>("quantity");
+                    var companyName = context.GetArgument<string>("companyName");
+
+                    var filter = new ProductFilterRequest { CompanyName = companyName };
+                    return productService.GetFilteredProductsAsync(filter, quantity);
+                });
+        }
     }
 
-    // Define the GraphQL query to get filtered products
-    public async Task<IEnumerable<ProductEntity>> GetFilteredProductsAsync(
-        [GraphQLNonNullType] string? search,
-        string? businessType,
-        string? address,
-        string? postalCode,
-        string? city,
-        string? phoneNumber,
-        string? email,
-        string? revenue,
-        string? numberOfEmployees,
-        string? ceo
-    )
+    public class ProductType : ObjectGraphType<ProductEntity>
     {
-        return await _productService.GetFilteredProductsAsync(
-            search, businessType, address, postalCode, city, phoneNumber, email,
-            revenue, numberOfEmployees, ceo
-        );
+        public ProductType()
+        {
+            Field(x => x.ProductId);
+            Field(x => x.CompanyName);
+            Field(x => x.BusinessType);
+            Field(x => x.Revenue);
+            Field(x => x.NumberOfEmployees);
+            Field(x => x.PhoneNumber);
+        }
     }
 }

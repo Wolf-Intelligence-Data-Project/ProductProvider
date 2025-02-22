@@ -15,8 +15,7 @@ namespace ProductProvider.Migrations
                 name: "Products",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OrganizationNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -25,15 +24,17 @@ namespace ProductProvider.Migrations
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BusinessType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Revenue = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    NumberOfEmployees = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Revenue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    NumberOfEmployees = table.Column<int>(type: "int", nullable: false),
                     CEO = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SoldUntil = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReservedUntil = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    SoldTo = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ReservedUntil = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReservedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Products", x => x.Id);
+                    table.PrimaryKey("PK_Products", x => x.ProductId);
                 });
         }
 

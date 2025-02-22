@@ -1,48 +1,90 @@
-﻿using ProductProvider.Models.Data.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using ProductProvider.Models.Data.Entities;
 using ProductProvider.Models.Data;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ProductProvider.Models;
 using ProductProvider.Interfaces;
 
-namespace ProductProvider.Repositories;
-
-public class ProductRepository : IProductRepository
+namespace ProductProvider.Repositories
 {
-    private readonly ProductDbContext _dbContext;
-
-    public ProductRepository(ProductDbContext dbContext)
+    public class ProductRepository : IProductRepository
     {
-        _dbContext = dbContext;
-    }
+        private readonly ProductDbContext _context;
 
-    public async Task<IEnumerable<ProductEntity>> GetFilteredProductsAsync(
-        string? search = null,
-        string? businessType = null,
-        string? address = null,
-        string? postalCode = null,
-        string? city = null,
-        string? phoneNumber = null,
-        string? email = null,
-        string? revenue = null,
-        string? numberOfEmployees = null,
-        string? ceo = null)
-    {
-        var query = _dbContext.Products.AsQueryable();
+        public ProductRepository(ProductDbContext context)
+        {
+            _context = context;
+        }
 
-        // Apply filters directly to the query (data access concerns)
-        if (!string.IsNullOrEmpty(search)) query = query.Where(p => p.CompanyName.Contains(search));
-        if (!string.IsNullOrEmpty(businessType)) query = query.Where(p => p.BusinessType.Contains(businessType));
-        if (!string.IsNullOrEmpty(address)) query = query.Where(p => p.Address.Contains(address));
-        if (!string.IsNullOrEmpty(postalCode)) query = query.Where(p => p.PostalCode.Contains(postalCode));
-        if (!string.IsNullOrEmpty(city)) query = query.Where(p => p.City.Contains(city));
-        if (!string.IsNullOrEmpty(phoneNumber)) query = query.Where(p => p.PhoneNumber.Contains(phoneNumber));
-        if (!string.IsNullOrEmpty(email)) query = query.Where(p => p.Email.Contains(email));
-        if (!string.IsNullOrEmpty(revenue)) query = query.Where(p => p.Revenue.Contains(revenue));
-        if (!string.IsNullOrEmpty(numberOfEmployees)) query = query.Where(p => p.NumberOfEmployees.Contains(numberOfEmployees));
-        if (!string.IsNullOrEmpty(ceo)) query = query.Where(p => p.CEO.Contains(ceo));
+        public async Task<List<ProductEntity>> GetAvailableProductsAsync(ProductFilterRequest filters, int quantity)
+        {
+            var query = _context.Products.AsQueryable();
 
-        // Only return products that are not sold or reserved
-        query = query.Where(p => p.SoldUntil == null || p.ReservedUntil == null);
+            if (!string.IsNullOrEmpty(filters.CompanyName))
+                query = query.Where(p => p.CompanyName.Contains(filters.CompanyName));
 
-        return await query.ToListAsync();
+            if (!string.IsNullOrEmpty(filters.BusinessType))
+                query = query.Where(p => p.BusinessType == filters.BusinessType);
+
+            if (filters.MinRevenue.HasValue)
+                query = query.Where(p => p.Revenue >= filters.MinRevenue.Value);
+
+            if (!string.IsNullOrEmpty(filters.CEO))
+                query = query.Where(p => p.CEO.Contains(filters.CEO));
+
+            // Add other fields similarly
+
+            query = query
+                .Where(p => (p.SoldUntil == null || p.SoldUntil < DateTime.UtcNow) && (p.ReservedUntil == null || p.ReservedUntil < DateTime.UtcNow))
+                .OrderBy(p => Guid.NewGuid()) // Randomly pick products
+                .Take(quantity);
+
+            return await query.ToListAsync();
+        }
+
+
+        public async Task ReserveProductsAsync(List<ProductEntity> products, Guid userId)
+        {
+            var reservationTime = DateTime.UtcNow.AddMinutes(15);
+            foreach (var product in products)
+            {
+                product.ReservedUntil = reservationTime;
+                product.ReservedBy = userId;
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReleaseExpiredReservationsAsync()
+        {
+            var expiredProducts = await _context.Products
+                .Where(p => p.ReservedUntil < DateTime.UtcNow)
+                .ToListAsync();
+
+            foreach (var product in expiredProducts)
+            {
+                product.ReservedUntil = null;
+                product.ReservedBy = null;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+        public async Task<int> GetAvailableProductsQuantityAsync()
+        {
+            return await _context.Products
+                                 .Where(p => (p.SoldUntil == null || p.SoldUntil < DateTime.UtcNow) &&
+                                             (p.ReservedUntil == null || p.ReservedUntil < DateTime.UtcNow))
+                                 .CountAsync();
+        }
+
+        public async Task AddProductsAsync(List<ProductEntity> products)
+        {
+            await _context.Products.AddRangeAsync(products);
+            await _context.SaveChangesAsync();
+        }
+
+
     }
 }

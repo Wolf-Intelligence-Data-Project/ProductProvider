@@ -24,11 +24,9 @@ namespace ProductProvider.Migrations
 
             modelBuilder.Entity("ProductProvider.Models.Data.Entities.ProductEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("ProductId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -54,9 +52,8 @@ namespace ProductProvider.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("NumberOfEmployees")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("NumberOfEmployees")
+                        .HasColumnType("int");
 
                     b.Property<string>("OrganizationNumber")
                         .IsRequired()
@@ -70,17 +67,22 @@ namespace ProductProvider.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ReservedBy")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("ReservedUntil")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Revenue")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("Revenue")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<Guid?>("SoldTo")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("SoldUntil")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                    b.HasKey("ProductId");
 
                     b.ToTable("Products");
                 });

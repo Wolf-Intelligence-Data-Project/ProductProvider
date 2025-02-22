@@ -1,30 +1,68 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProductProvider.Interfaces;
+using ProductProvider.Models;
+using ProductProvider.Models.Data.Entities;
 
-namespace ProductProvider.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class ProductController : ControllerBase
+namespace ProductProvider.Controllers
 {
-    private readonly IProductService _productService;
-
-    public ProductController(IProductService productService)
+    [Route("api/products")]
+    [ApiController]
+    public class ProductController : ControllerBase
     {
-        _productService = productService;
-    }
+        private readonly IProductService _productService;
 
-    [HttpGet("filtered")]
-    public async Task<IActionResult> GetFilteredProducts(
-        [FromQuery] string? search, [FromQuery] string? businessType, [FromQuery] string? address,
-        [FromQuery] string? postalCode, [FromQuery] string? city, [FromQuery] string? phoneNumber,
-        [FromQuery] string? email, [FromQuery] string? revenue, [FromQuery] string? numberOfEmployees,
-        [FromQuery] string? ceo)
-    {
-        var products = await _productService.GetFilteredProductsAsync(
-            search, businessType, address, postalCode, city, phoneNumber, email, revenue,
-            numberOfEmployees, ceo);
+        public ProductController(IProductService productService)
+        {
+            _productService = productService;
+        }
 
-        return Ok(products);
+        [HttpPost("filter")]
+        public async Task<ActionResult<ProductFilterResponse>> GetFilteredProducts([FromBody] ProductFilterRequest request, [FromQuery] int quantity)
+        {
+            var filteredProducts = await _productService.GetFilteredProductsAsync(request, quantity);
+            var availableQuantity = filteredProducts.Count;
+
+            if (availableQuantity < quantity)
+            {
+                quantity = availableQuantity;
+            }
+
+            var response = new ProductFilterResponse
+            {
+                AvailableQuantity = availableQuantity,
+                Products = filteredProducts.Take(quantity).ToList()
+            };
+
+            return Ok(response);
+        }
+
+
+
+        [HttpPost("reserve")]
+        public async Task<IActionResult> ReserveProducts([FromBody] ProductFilterRequest request, [FromQuery] int quantity, [FromHeader] Guid userId)
+        {
+            await _productService.ReserveProductsAsync(request, quantity, userId);
+            return Ok("Products reserved successfully.");
+        }
+
+        [HttpGet("available-quantity")]
+        public async Task<ActionResult<int>> GetAvailableProductsQuantity()
+        {
+            var availableProductsQuantity = await _productService.GetAvailableProductsQuantityAsync();
+            return Ok(availableProductsQuantity);
+        }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportProducts([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            await _productService.ImportProductsFromExcelAsync(file);
+            return Ok("Products imported successfully.");
+        }
+
     }
 }
