@@ -7,7 +7,7 @@ namespace ProductProvider.Interfaces
 {
     public interface IElasticSearchService
     {
-        Task<List<ProductEntity>> SearchProductsAsync(ProductFilterRequest filters, int quantity);
+        Task<int> SearchProductsAsync(ProductFilterRequest filters);
         Task IndexProductAsync(ProductEntity product);
         Task DeleteProductAsync(string productId);
     }

@@ -1,45 +1,93 @@
-﻿using ProductProvider.Repositories;
-using ProductProvider.Interfaces;
-using ProductProvider.Models;
+﻿using ProductProvider.Models;
 using ProductProvider.Models.Data.Entities;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PriceSettingsLibrary;
 using OfficeOpenXml;
+using Microsoft.Extensions.Options;
 
-namespace ProductProvider.Services
+namespace ProductProvider.Interfaces
 {
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
         private readonly IMessageBus _messageBus;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IOptions<PriceSettings> _priceSettings;
+        private readonly ILogger<ProductService> _logger;
 
-        public ProductService(IProductRepository productRepository, IMessageBus messageBus)
+        public ProductService(IProductRepository productRepository, IMessageBus messageBus, ILogger<ProductService> logger,IOptions<PriceSettings> priceSettings)
         {
             _productRepository = productRepository;
             _messageBus = messageBus;
+            _priceSettings = priceSettings;
+            _logger = logger;
         }
 
-        public async Task<List<ProductEntity>> GetFilteredProductsAsync(ProductFilterRequest filters, int quantity)
+        public async Task<ProductFilterResponse> GetProductCountAsync(ProductFilterRequest filters)
         {
-            return await _productRepository.GetAvailableProductsAsync(filters, quantity);
-        }
+            _logger.LogInformation("Filters received: {BusinessTypes}, {Cities}, {PostalCodes}, {MinRevenue}, {MaxRevenue}, {MinNumberOfEmployees}, {MaxNumberOfEmployees}",
+                string.Join(",", filters.BusinessTypes ?? new List<string>()) ?? "null",
+                string.Join(",", filters.Cities ?? new List<string>()) ?? "null",
+                string.Join(",", filters.PostalCodes ?? new List<string>()) ?? "null",
+                filters.MinRevenue?.ToString() ?? "null",
+                filters.MaxRevenue?.ToString() ?? "null",
+                filters.MinNumberOfEmployees?.ToString() ?? "null",
+                filters.MaxNumberOfEmployees?.ToString() ?? "null");
 
-        public async Task ReserveProductsAsync(ProductFilterRequest filters, int quantity, Guid userId)
-        {
-            var products = await _productRepository.GetAvailableProductsAsync(filters, quantity);
-            if (products.Count > 0)
+            // Get the count from the repository
+            var count = await _productRepository.GetFilteredProductsCountAsync(filters);
+
+            // Ensure QuantityOfFiltered is required
+            if (filters.QuantityOfFiltered > 0)
             {
-                await _productRepository.ReserveProductsAsync(products, userId);
+                count = Math.Min(count, filters.QuantityOfFiltered);
+            }
 
-                // Publish product reservation event to RabbitMQ
+            // Get price and VAT rate from configuration
+            decimal pricePerProduct = _priceSettings.Value.PricePerProduct; // SEK per product
+            decimal vatRate = _priceSettings.Value.VatRate; // VAT rate (e.g., 25 for 25%)
+
+            // Calculate the total price before VAT
+            decimal baseTotalPrice = count * pricePerProduct;
+
+            // Calculate the total price after VAT
+            decimal totalPriceWithVat = baseTotalPrice * (1 + vatRate / 100); // Apply VAT to total price
+
+            // Return the response model
+            return new ProductFilterResponse
+            {
+                AvailableQuantity = count,
+                TotalPriceBeforeVat = baseTotalPrice,
+                TotalPrice = totalPriceWithVat 
+            };
+        }
+
+
+        public async Task<int> ReserveProductsAsync(ProductFilterRequest filters, Guid userId)
+        {
+            var companyId = userId;
+
+            // Use GetFilteredProductsAsync to get the count of products (no product data is exposed)
+            var reservedCount = await _productRepository.GetFilteredProductsCountAsync(filters);
+
+            if (reservedCount > 0)
+            {
+                // Fetch only product IDs (no sensitive product data is returned)
+                var productIds = await _productRepository.GetProductIdsForReservationAsync(filters);
+
+                // Reserve products in the repository by their IDs (without exposing product details)
+                await _productRepository.ReserveProductsByIdsAsync(productIds, companyId);
+
+                // Publish product reservation event to RabbitMQ (without sensitive product details)
                 await _messageBus.PublishAsync("ProductReserved", new
                 {
-                    UserId = userId,
-                    ReservedProducts = products
+                    UserId = companyId,
+                    ReservedProductIds = productIds  // Send only product IDs in the event
                 });
             }
+
+            return reservedCount; // Return the count of reserved products
         }
+
 
         public async Task ReleaseExpiredReservationsAsync()
         {

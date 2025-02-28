@@ -9,8 +9,8 @@ namespace ProductProvider.Interfaces
 {
     public interface IProductService
     {
-        Task<List<ProductEntity>> GetFilteredProductsAsync(ProductFilterRequest filters, int quantity);
-        Task ReserveProductsAsync(ProductFilterRequest filters, int quantity, Guid userId);
+        Task<ProductFilterResponse> GetProductCountAsync(ProductFilterRequest filters);
+        Task<int> ReserveProductsAsync(ProductFilterRequest filters, Guid userId);
         Task ReleaseExpiredReservationsAsync();
         Task ImportProductsFromExcelAsync(IFormFile file);
         Task<int> GetAvailableProductsQuantityAsync();

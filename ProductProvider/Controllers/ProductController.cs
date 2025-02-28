@@ -1,55 +1,49 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Nest;
 using ProductProvider.Interfaces;
 using ProductProvider.Models;
-using ProductProvider.Models.Data.Entities;
+using System.Text.Json;
 
 namespace ProductProvider.Controllers
 {
+    [Authorize]
     [Route("api/products")]
     [ApiController]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly ILogger<ProductController> _logger;  // Add logger field
 
-        public ProductController(IProductService productService)
+        // Inject the logger into the constructor
+        public ProductController(IProductService productService, ILogger<ProductController> logger)
         {
             _productService = productService;
+            _logger = logger;  // Assign the injected logger to the field
         }
-
         [HttpPost("filter")]
-        public async Task<ActionResult<ProductFilterResponse>> GetFilteredProducts([FromBody] ProductFilterRequest request, [FromQuery] int quantity)
+        public async Task<ActionResult<ProductFilterResponse>> GetFilteredProducts([FromBody] ProductFilterRequest request)
         {
-            var filteredProducts = await _productService.GetFilteredProductsAsync(request, quantity);
-            var availableQuantity = filteredProducts.Count;
+            _logger.LogInformation("Received filter request: {Filters}", JsonSerializer.Serialize(request));
 
-            if (availableQuantity < quantity)
+            if (request == null)
             {
-                quantity = availableQuantity;
+                _logger.LogWarning("Filters are null.");
+                return BadRequest("Invalid filters.");
             }
 
-            var response = new ProductFilterResponse
-            {
-                AvailableQuantity = availableQuantity,
-                Products = filteredProducts.Take(quantity).ToList()
-            };
+            // Call the service method and get the response
+            var response = await _productService.GetProductCountAsync(request);
 
-            return Ok(response);
+            return Ok(response);  // Return the response with available quantity and total price
         }
-
 
 
         [HttpPost("reserve")]
-        public async Task<IActionResult> ReserveProducts([FromBody] ProductFilterRequest request, [FromQuery] int quantity, [FromHeader] Guid userId)
+        public async Task<IActionResult> ReserveProducts([FromBody] ProductFilterRequest request, [FromQuery] Guid userId)
         {
-            await _productService.ReserveProductsAsync(request, quantity, userId);
+            await _productService.ReserveProductsAsync(request, userId);
             return Ok("Products reserved successfully.");
-        }
-
-        [HttpGet("available-quantity")]
-        public async Task<ActionResult<int>> GetAvailableProductsQuantity()
-        {
-            var availableProductsQuantity = await _productService.GetAvailableProductsQuantityAsync();
-            return Ok(availableProductsQuantity);
         }
 
         [HttpPost("import")]
