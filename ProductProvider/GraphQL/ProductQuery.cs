@@ -1,11 +1,10 @@
 ﻿using GraphQL;
 using GraphQL.Types;
-using ProductProvider.Interfaces;
 using ProductProvider.Models;
 using ProductProvider.Models.Data.Entities;
-using ProductProvider.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ProductProvider.Interfaces.Services;
 
 namespace ProductProvider.GraphQL
 {

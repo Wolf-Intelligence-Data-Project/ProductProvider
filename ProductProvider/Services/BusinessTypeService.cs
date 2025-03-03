@@ -1,7 +1,7 @@
 ﻿using ProductProvider.Models.Data.Entities;
-using ProductProvider.Interfaces;
+using ProductProvider.Interfaces.Services;
 
-namespace ProductProvider.Services;
+namespace ProductProvider.Interfaces;
 public class BusinessTypeService : IBusinessTypeService
 {
     public string FormatBusinessTypeFilter(string businessTypeFilter)

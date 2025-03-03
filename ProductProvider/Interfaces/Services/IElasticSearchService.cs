@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ProductProvider.Models.Data.Entities;
 using ProductProvider.Models;
 
-namespace ProductProvider.Interfaces
+namespace ProductProvider.Interfaces.Services
 {
     public interface IElasticSearchService
     {

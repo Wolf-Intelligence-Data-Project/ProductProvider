@@ -1,6 +1,6 @@
 ﻿using ProductProvider.Models.Data.Entities;
 
-namespace ProductProvider.Interfaces;
+namespace ProductProvider.Interfaces.Services;
 
 public interface IBusinessTypeService
 {

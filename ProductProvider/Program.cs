@@ -9,11 +9,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using Microsoft.Extensions.Logging;
+using ProductProvider.Interfaces.Repositories;
+using ProductProvider.Interfaces.Services;
+using ProductProvider.Models;
 using ProductProvider.Services;
-using Microsoft.Extensions.Configuration;
-using PriceSettingsLibrary;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,9 +110,16 @@ builder.Services.Configure<PriceSettings>(builder.Configuration.GetSection("Pric
 builder.Services.AddScoped<IBusinessTypeService, BusinessTypeService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IMessageBus, RabbitMQMessageBus>(); // Register IMessageBus with RabbitMQMessageBus
+builder.Services.AddScoped<IMessageBus, RabbitMQMessageBus>();
 
-// Set up DbContext with SQL Server
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+
+// Set up DbContext for ProductDbContext
+builder.Services.AddDbContext<ProductDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ProductDatabase")));
+
+// Set up DbContext for ReservationDbContext
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ProductDatabase")));
 

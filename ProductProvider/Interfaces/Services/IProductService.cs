@@ -5,14 +5,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace ProductProvider.Interfaces
+namespace ProductProvider.Interfaces.Services
 {
     public interface IProductService
     {
         Task<ProductFilterResponse> GetProductCountAsync(ProductFilterRequest filters);
-        Task<int> ReserveProductsAsync(ProductFilterRequest filters, Guid userId);
-        Task ReleaseExpiredReservationsAsync();
         Task ImportProductsFromExcelAsync(IFormFile file);
-        Task<int> GetAvailableProductsQuantityAsync();
     }
 }
