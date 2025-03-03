@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 public class ReservationEntity
 {
     [Required]
-    public Guid ReservationId { get; set; } // Primary key for this table
+    public Guid ReservationId { get; set; }  // Primary key for this table
 
     [Required]
     public Guid UserId { get; set; }

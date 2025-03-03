@@ -7,22 +7,18 @@ using Microsoft.Data.SqlClient;
 using System.Text;
 using System.Text.RegularExpressions;
 using ProductProvider.Interfaces.Repositories;
-using ProductProvider.Interfaces.Services;
-using System.Data.Common;
 
 namespace ProductProvider.Repositories;
 
 public class ProductRepository : IProductRepository
 {
     private readonly ProductDbContext _context;
-    private readonly IBusinessTypeService _businessTypeService;
     private readonly string _connectionString;
     
 
-    public ProductRepository(ProductDbContext context, IBusinessTypeService businessTypeService, IConfiguration configuration)
+    public ProductRepository(ProductDbContext context, IConfiguration configuration)
     {
         _context = context;
-        _businessTypeService = businessTypeService;
         _connectionString = configuration.GetConnectionString("ProductDatabase");
     }
 
@@ -149,33 +145,7 @@ public class ProductRepository : IProductRepository
         using var connection = new SqlConnection(_connectionString);
         return (await connection.QueryAsync<Guid>(sql, parameters)).ToList();
     }
-
-    public async Task ReserveProductsByIdsAsync(List<Guid> productIds, Guid companyId)
-    {
-        // Prepare the SQL update statement
-        var sql = @"
-                UPDATE Products
-                SET ReservedBy = @CompanyId, ReservedUntil = @ReservedUntil
-                WHERE ProductId IN @ProductIds";
-
-        var parameters = new DynamicParameters();
-        parameters.Add("CompanyId", companyId);
-        parameters.Add("ReservedUntil", TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")).AddMinutes(15));
-        parameters.Add("ProductIds", productIds);
-
-        // Execute the query with Dapper
-        using var connection = new SqlConnection(_connectionString); // Assuming _connectionString is your DB connection string
-        await connection.ExecuteAsync(sql, parameters);
-    }
-
-    public async Task<int> GetAvailableProductsQuantityAsync()
-    {
-        return await _context.Products
-                             .Where(p => (p.SoldUntil == null || p.SoldUntil < TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"))) &&
-                                         (p.ReservedUntil == null || p.ReservedUntil < TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"))))
-                             .CountAsync();
-    }
-
+    
     public async Task AddProductsAsync(List<ProductEntity> products)
     {
         await _context.Products.AddRangeAsync(products);

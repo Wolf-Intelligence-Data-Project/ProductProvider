@@ -12,8 +12,8 @@ using ProductProvider.Models.Data;
 namespace ProductProvider.Migrations
 {
     [DbContext(typeof(ProductDbContext))]
-    [Migration("20250302233026_add reservation table")]
-    partial class addreservationtable
+    [Migration("20250303160008_adding Reservations table")]
+    partial class addingReservationstable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

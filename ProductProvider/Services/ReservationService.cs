@@ -25,18 +25,18 @@ public class ReservationService : IReservationService
         if (quantity > 0 && companyId != Guid.Empty)
         {
             // First, remove existing reservations for this company
-            await _reservationRepository.ReleaseExpiredReservationsAsync();
-            await _reservationRepository.DeleteAsync(companyId);
+            await _reservationRepository.UpdateReservationsAsync(companyId);
+            await DeleteReservationByUserIdAsync(companyId);
 
             // Fetch only product IDs (no sensitive product data is returned)
             var productIds = await _productRepository.GetProductIdsForReservationAsync(request);
 
             // Reserve products in the repository by their IDs (without exposing product details)
-            await _productRepository.ReserveProductsByIdsAsync(productIds, companyId);
+            await _reservationRepository.ReserveProductsByIdsAsync(productIds, companyId);
 
             // Create and save reservation using factory
             var reservation = ReservationFactory.CreateReservationEntity(request);
-            await _reservationRepository.AddAsync(reservation);
+            await _reservationRepository.AddReservationAsync(reservation);
 
             // Start a timer to release expired reservations after 15 minutes and 3 seconds
             StartReservationReleaseTimer(companyId);
@@ -59,10 +59,23 @@ public class ReservationService : IReservationService
         var reservation = await _reservationRepository.GetReservationByUserIdAsync(companyId);
         if (reservation != null)
         {
-            await _reservationRepository.DeleteAsync(reservation.ReservationId);
+            await _reservationRepository.DeleteReservationAsync(reservation.ReservationId);
             return true;
         }
         return false;
+    }
+
+    private async Task ReleaseExpiredReservationsAsync()
+    {
+        // Get the current Stockholm time directly in the service
+        var stockholmTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+                TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
+
+        // Calculate the cutoff time (15 minutes and 2 seconds)
+        var cutoffTime = stockholmTime.AddMinutes(-15).AddSeconds(-2);
+
+        // Call the repository to update expired reservations
+        await _reservationRepository.UpdateExpiredReservationsAsync(cutoffTime);
     }
 
     // Auto Cleanup Reservation Services
@@ -75,12 +88,20 @@ public class ReservationService : IReservationService
 
     private async Task TimerElapsedAsync(Guid companyId)
     {
-        await _reservationRepository.ReleaseExpiredReservationsAsync();
+        try
+        {
+            await ReleaseExpiredReservationsAsync();
 
-        // Call the method to delete the reservation
-        await DeleteReservationByUserIdAsync(companyId);
-
-        _timer.Stop();
-        _timer.Dispose();
+            await DeleteReservationByUserIdAsync(companyId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during timer elapsed: {ex.Message}");
+        }
+        finally
+        {
+            _timer.Stop();
+            _timer.Dispose();
+        }
     }
 }
