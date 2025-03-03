@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using ProductProvider.Models;
-using ProductProvider.Models.Data.Entities;
+﻿using ProductProvider.Models.Data.Entities;
 
 namespace ProductProvider.Interfaces.Repositories
 {
@@ -9,6 +6,9 @@ namespace ProductProvider.Interfaces.Repositories
     {
         Task AddAsync(ReservationEntity reservation);
         Task<ReservationEntity> GetReservationByUserIdAsync(Guid companyId);
-        Task DeleteAsync(Guid reservationId);
+        Task DeleteAsync(Guid companyId);
+
+        // These handle ReservedUntil and ReservedBy in the Products table
+        Task ReleaseExpiredReservationsAsync();
     }
 }

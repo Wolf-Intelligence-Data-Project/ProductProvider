@@ -2,6 +2,7 @@
 
 public class ReservationDto
 {
+    public Guid UserId { get; set; }
     public string? BusinessTypes { get; set; }
     public string? Regions { get; set; }
     public string? Cities { get; set; }

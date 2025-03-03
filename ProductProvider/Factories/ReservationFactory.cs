@@ -9,7 +9,8 @@
         {
             return new ReservationEntity
             {
-                ReservationId = Guid.NewGuid(), // ReservationId is still used in the entity
+                ReservationId = Guid.NewGuid(),
+                UserId = request.CompanyId,
                 BusinessTypes = string.Join(",", request.BusinessTypes ?? new List<string>()),
                 Regions = string.Join(",", request.Regions ?? new List<string>()),
                 Cities = string.Join(",", request.Cities ?? new List<string>()),
@@ -19,8 +20,9 @@
                 MinNumberOfEmployees = request.MinNumberOfEmployees,
                 MaxNumberOfEmployees = request.MaxNumberOfEmployees,
                 Quantity = request.QuantityOfFiltered,
-                ReservedTime = DateTime.UtcNow,
-                SoldTime = DateTime.UtcNow.AddMinutes(15)
+                ReservedTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")),
+                SoldTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")).AddMinutes(15)
+
             };
         }
 
@@ -28,6 +30,7 @@
         {
             return new ReservationDto
             {
+                UserId = reservation.UserId,
                 BusinessTypes = reservation.BusinessTypes,
                 Regions = reservation.Regions,
                 Cities = reservation.Cities,

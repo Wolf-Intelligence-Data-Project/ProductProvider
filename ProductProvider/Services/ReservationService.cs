@@ -2,7 +2,6 @@
 using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Interfaces.Services;
 using ProductProvider.Models;
-using ProductProvider.Models.Data.Entities;
 
 namespace ProductProvider.Services;
 
@@ -21,10 +20,14 @@ public class ReservationService : IReservationService
     public async Task<ReservationDto> ReserveProductsAsync(ProductReserveRequest request)
     {
         var companyId = request.CompanyId;
-        var quantity = request.QuantityOfFiltered; // Ensuring it has a default value
+        var quantity = request.QuantityOfFiltered;
 
-        if (quantity > 0)
+        if (quantity > 0 && companyId != Guid.Empty)
         {
+            // First, remove existing reservations for this company
+            await _reservationRepository.ReleaseExpiredReservationsAsync();
+            await _reservationRepository.DeleteAsync(companyId);
+
             // Fetch only product IDs (no sensitive product data is returned)
             var productIds = await _productRepository.GetProductIdsForReservationAsync(request);
 
@@ -36,14 +39,13 @@ public class ReservationService : IReservationService
             await _reservationRepository.AddAsync(reservation);
 
             // Start a timer to release expired reservations after 15 minutes and 3 seconds
-            StartReservationReleaseTimer();
+            StartReservationReleaseTimer(companyId);
 
             // Create and return the ReservationDto from the reservation entity
             return ReservationFactory.CreateReservationDto(reservation);
         }
 
-        // If quantity is not greater than 0, return null or handle the case as needed
-        return null;
+        return null!;
     }
 
     public async Task<ReservationDto> GetReservationByUserIdAsync(Guid companyId)
@@ -62,22 +64,23 @@ public class ReservationService : IReservationService
         }
         return false;
     }
-    private void StartReservationReleaseTimer()
+
+    // Auto Cleanup Reservation Services
+    private void StartReservationReleaseTimer(Guid companyId)
     {
         _timer = new System.Timers.Timer(900000 + 3000); // 15 minutes + 3 seconds
-        _timer.Elapsed += async (sender, e) => await TimerElapsedAsync();
+        _timer.Elapsed += async (sender, e) => await TimerElapsedAsync(companyId);
         _timer.Start();
     }
 
-    private async Task TimerElapsedAsync()
+    private async Task TimerElapsedAsync(Guid companyId)
     {
-        await ReleaseExpiredReservationsAsync();
+        await _reservationRepository.ReleaseExpiredReservationsAsync();
+
+        // Call the method to delete the reservation
+        await DeleteReservationByUserIdAsync(companyId);
+
         _timer.Stop();
         _timer.Dispose();
-    }
-
-    private async Task ReleaseExpiredReservationsAsync()
-    {
-        await _productRepository.ReleaseExpiredReservationsAsync();
     }
 }

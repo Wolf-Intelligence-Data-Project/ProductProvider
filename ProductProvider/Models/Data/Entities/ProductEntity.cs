@@ -1,12 +1,16 @@
 ﻿using Nest;
+using System.ComponentModel.DataAnnotations;
 
 namespace ProductProvider.Models.Data.Entities;
 
 public class ProductEntity
 {
+    [Required]
     public Guid ProductId { get; set; } = Guid.NewGuid();
-    public string CompanyName { get; set; }
-    public string OrganizationNumber { get; set; }
+
+    [Required]
+    public string CompanyName { get; set; } = null!;
+    public string OrganizationNumber { get; set; } = null!;
     public string Address { get; set; }
     public string PostalCode { get; set; }
     public string City { get; set; }
