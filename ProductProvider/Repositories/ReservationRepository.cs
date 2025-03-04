@@ -23,33 +23,62 @@ public class ReservationRepository : IReservationRepository
     // This part communicates with products table
     public async Task ReserveProductsByIdsAsync(List<Guid> productIds, Guid companyId)
     {
-        // Prepare the SQL update statement
         var sql = @"
-                UPDATE Products
-                SET ReservedBy = @CompanyId, ReservedUntil = @ReservedUntil
-                WHERE ProductId IN @ProductIds";
+            UPDATE Products
+            SET ReservedBy = @CompanyId, ReservedUntil = @ReservedUntil
+            WHERE ProductId IN (SELECT value FROM STRING_SPLIT(@ProductIds, ','))";
 
         var parameters = new DynamicParameters();
         parameters.Add("CompanyId", companyId);
-        parameters.Add("ReservedUntil", TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")).AddMinutes(15));
-        parameters.Add("ProductIds", productIds);
+        parameters.Add("ReservedUntil", TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+            TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")).AddMinutes(15));
+        parameters.Add("ProductIds", string.Join(",", productIds));
 
-        // Execute the query with Dapper
         using var connection = new SqlConnection(_connectionString);
         await connection.ExecuteAsync(sql, parameters);
     }
 
-    public async Task UpdateExpiredReservationsAsync(ProductDbContext dbContext, DateTime cutoffTime)
+    public async Task DeleteExpiredReservationsAsync(DateTime cutoffTime)
     {
-        using var connection = new SqlConnection(_connectionString);
-
-        string sql = @"
+        // Start a transaction to ensure atomicity
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Execute SQL to update expired product reservations
+            using var connection = new SqlConnection(_connectionString);
+            string sql = @"
             UPDATE Products
             SET ReservedUntil = NULL, ReservedBy = NULL
             WHERE ReservedUntil < @CutoffTime";
 
-        await connection.ExecuteAsync(sql, new { CutoffTime = cutoffTime });
+            await connection.ExecuteAsync(sql, new { CutoffTime = cutoffTime });
+
+            // Use Entity Framework to find expired reservations (based on ReservedTime)
+            var expiredReservations = await _context.Set<ReservationEntity>()
+                                                     .Where(r => r.ReservedTime < cutoffTime)
+                                                     .ToListAsync();
+
+            // Remove expired reservations
+            if (expiredReservations.Any())
+            {
+                _context.Set<ReservationEntity>().RemoveRange(expiredReservations);
+            }
+
+            // Commit the transaction to save changes to both the Products and ReservationEntity tables
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync(); // Commit the transaction
+
+        }
+        catch (Exception ex)
+        {
+            // Rollback the transaction in case of an error
+            await transaction.RollbackAsync();
+            // Log the error (optional)
+            Console.WriteLine($"Error: {ex.Message}");
+            throw;
+        }
     }
+
 
     public async Task UpdateReservationsAsync(Guid companyId)
     {
@@ -61,6 +90,8 @@ public class ReservationRepository : IReservationRepository
         WHERE Reservedby = @UserId";
 
         await connection.ExecuteAsync(sql, new { UserId = companyId });
+
+
     }
     #endregion
 
@@ -77,15 +108,15 @@ public class ReservationRepository : IReservationRepository
         return await _context.Set<ReservationEntity>()
                              .FirstOrDefaultAsync(r => r.UserId == companyId);
     }
-
-    public async Task DeleteReservationAsync(ProductDbContext dbContext, Guid companyId)
+    public async Task DeleteReservationImmediatelyAsync(Guid reservationId)
     {
-        var reservation = await _context.Set<ReservationEntity>().FindAsync(companyId);
+        var reservation = await _context.Set<ReservationEntity>().FindAsync(reservationId);
         if (reservation != null)
         {
             _context.Set<ReservationEntity>().Remove(reservation);
             await _context.SaveChangesAsync();
         }
     }
+
     #endregion
 }

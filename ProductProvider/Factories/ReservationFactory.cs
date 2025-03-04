@@ -42,7 +42,7 @@
                 MaxNumberOfEmployees = reservation.MaxNumberOfEmployees,
                 Quantity = reservation.Quantity,
                 ReservedTime = reservation.ReservedTime,
-                SoldTime = reservation.SoldTime
+                SoldTime = null,
             };
         }
     }

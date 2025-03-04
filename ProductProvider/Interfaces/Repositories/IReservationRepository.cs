@@ -8,7 +8,8 @@ public interface IReservationRepository
     Task AddReservationAsync(ReservationEntity reservation);
     Task<ReservationEntity> GetReservationByUserIdAsync(Guid companyId);
     Task ReserveProductsByIdsAsync(List<Guid> productIds, Guid companyId);
-    Task DeleteReservationAsync(ProductDbContext dbContext, Guid companyId);
-    Task UpdateExpiredReservationsAsync(ProductDbContext dbContext, DateTime cutoffTime);
+
+    Task DeleteExpiredReservationsAsync(DateTime cutoffTime);
+    Task DeleteReservationImmediatelyAsync(Guid reservationId);
     Task UpdateReservationsAsync(Guid companyId);
 }

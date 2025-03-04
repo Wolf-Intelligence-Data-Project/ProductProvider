@@ -1,15 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nest;
 using Newtonsoft.Json;
-using ProductProvider.Interfaces;
 using ProductProvider.Interfaces.Services;
 using ProductProvider.Models;
-using ProductProvider.Models.Data;
-using ProductProvider.Services;
-using System.Text.Json;
-using System.Xml;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ProductProvider.Controllers;
 
@@ -20,15 +13,13 @@ public class ProductController : ControllerBase
 {
     private readonly IReservationService _reservationService;
     private readonly IProductService _productService;
-    private readonly ProductDbContext _dbContext;
     private readonly ILogger<ProductController> _logger;
 
-    public ProductController(IProductService productService, ILogger<ProductController> logger, IReservationService reservationService, ProductDbContext dbContext)
+    public ProductController(IProductService productService, ILogger<ProductController> logger, IReservationService reservationService)
     {
         _productService = productService;
         _logger = logger; 
         _reservationService = reservationService;
-        _dbContext = dbContext;
     }
     [HttpPost("filter")]
     public async Task<ActionResult<ProductFilterResponse>> GetFilteredProducts([FromBody] ProductFilterRequest request)
@@ -88,7 +79,7 @@ public class ProductController : ControllerBase
         }
 
         // Process reservation and get the full ReservationDto
-        var reservation = await _reservationService.ReserveProductsAsync(_dbContext, request);
+        var reservation = await _reservationService.ReserveProductsAsync(request);
 
         if (reservation == null)
         {
@@ -142,7 +133,7 @@ public class ProductController : ControllerBase
     [HttpDelete("delete-reservation")]
     public async Task<IActionResult> DeleteReservation(Guid userId)
     {
-        var isDeleted = await _reservationService.DeleteReservationByUserIdAsync(_dbContext, userId);
+        var isDeleted = await _reservationService.DeleteReservationNow(userId);
 
         if (!isDeleted)
         {

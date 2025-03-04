@@ -5,7 +5,7 @@ namespace ProductProvider.Interfaces.Services;
 
 public interface IReservationService
 {
-    Task<ReservationDto> ReserveProductsAsync(ProductDbContext dbContext, ProductReserveRequest request);
+    Task<ReservationDto> ReserveProductsAsync(ProductReserveRequest request);
     Task<ReservationDto> GetReservationByUserIdAsync(Guid companyId);
-    Task<bool> DeleteReservationByUserIdAsync(ProductDbContext dbContext, Guid companyId);
+    Task<bool> DeleteReservationNow(Guid companyId);
 }
