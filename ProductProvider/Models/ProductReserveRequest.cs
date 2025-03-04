@@ -18,6 +18,9 @@ namespace ProductProvider.Models
         [JsonPropertyName("cities")]
         public List<string>? Cities { get; set; }
 
+        [JsonPropertyName("citiesByRegion")]
+        public List<string>? CitiesByRegion { get; set; }
+
         [JsonPropertyName("postalCodes")]
         public List<string>? PostalCodes { get; set; }
 

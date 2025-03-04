@@ -1,15 +1,9 @@
-﻿using ProductProvider.Models.Data.Entities;
-using ProductProvider.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using ProductProvider.Models;
 
-namespace ProductProvider.Interfaces.Services
+namespace ProductProvider.Interfaces.Services;
+
+public interface IProductService
 {
-    public interface IProductService
-    {
-        Task<ProductFilterResponse> GetProductCountAsync(ProductFilterRequest filters);
-        Task ImportProductsFromExcelAsync(IFormFile file);
-    }
+    Task<ProductFilterResponse> GetProductCountAsync(ProductFilterRequest filters);
+    Task ImportProductsFromExcelAsync(IFormFile file);
 }

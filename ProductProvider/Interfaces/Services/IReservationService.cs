@@ -1,13 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-using ProductProvider.Models;
+﻿using ProductProvider.Models;
+using ProductProvider.Models.Data;
 
-namespace ProductProvider.Interfaces.Services
+namespace ProductProvider.Interfaces.Services;
+
+public interface IReservationService
 {
-    public interface IReservationService
-    {
-        Task<ReservationDto> ReserveProductsAsync(ProductReserveRequest request);
-        Task<ReservationDto> GetReservationByUserIdAsync(Guid companyId);
-        Task<bool> DeleteReservationByUserIdAsync(Guid companyId);
-    }
+    Task<ReservationDto> ReserveProductsAsync(ProductDbContext dbContext, ProductReserveRequest request);
+    Task<ReservationDto> GetReservationByUserIdAsync(Guid companyId);
+    Task<bool> DeleteReservationByUserIdAsync(ProductDbContext dbContext, Guid companyId);
 }

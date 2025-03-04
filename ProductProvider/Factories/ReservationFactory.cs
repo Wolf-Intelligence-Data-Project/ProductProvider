@@ -13,7 +13,8 @@
                 UserId = request.CompanyId,
                 BusinessTypes = string.Join(",", request.BusinessTypes ?? new List<string>()),
                 Regions = string.Join(",", request.Regions ?? new List<string>()),
-                Cities = string.Join(",", request.Cities ?? new List<string>()),
+                Cities = request.Cities != null ? string.Join(",", request.Cities) : null,  // Separate Cities
+                CitiesByRegion = request.CitiesByRegion != null ? string.Join(",", request.CitiesByRegion) : null, // Separate CitiesByRegion
                 PostalCodes = string.Join(",", request.PostalCodes ?? new List<string>()),
                 MinRevenue = request.MinRevenue,
                 MaxRevenue = request.MaxRevenue,
@@ -21,8 +22,7 @@
                 MaxNumberOfEmployees = request.MaxNumberOfEmployees,
                 Quantity = request.QuantityOfFiltered,
                 ReservedTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")),
-                SoldTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")).AddMinutes(15)
-
+                SoldTime = null,
             };
         }
 
@@ -34,6 +34,7 @@
                 BusinessTypes = reservation.BusinessTypes,
                 Regions = reservation.Regions,
                 Cities = reservation.Cities,
+                CitiesByRegion = reservation.CitiesByRegion, // Include CitiesByRegion separately
                 PostalCodes = reservation.PostalCodes,
                 MinRevenue = reservation.MinRevenue,
                 MaxRevenue = reservation.MaxRevenue,

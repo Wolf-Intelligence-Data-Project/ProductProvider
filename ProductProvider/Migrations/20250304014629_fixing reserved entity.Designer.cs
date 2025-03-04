@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProductProvider.Models.Data;
 
@@ -11,9 +12,11 @@ using ProductProvider.Models.Data;
 namespace ProductProvider.Migrations
 {
     [DbContext(typeof(ProductDbContext))]
-    partial class ProductDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250304014629_fixing reserved entity")]
+    partial class fixingreservedentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,9 +100,6 @@ namespace ProductProvider.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Cities")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CitiesByRegion")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("MaxNumberOfEmployees")

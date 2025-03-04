@@ -1,23 +1,30 @@
-﻿using ProductProvider.Factories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using ProductProvider.Factories;
 using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Interfaces.Services;
 using ProductProvider.Models;
+using ProductProvider.Models.Data;
 
 namespace ProductProvider.Services;
 
 public class ReservationService : IReservationService
 {
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IReservationRepository _reservationRepository;
     private readonly IProductRepository _productRepository;
     private System.Timers.Timer _timer;
+    private readonly ILogger<ReservationService> _logger;
 
-    public ReservationService(IReservationRepository reservationRepository, IProductRepository productRepository)
+    public ReservationService(IReservationRepository reservationRepository, IProductRepository productRepository, IServiceScopeFactory serviceScopeFactory, ILogger<ReservationService> logger)
     {
+        _serviceScopeFactory = serviceScopeFactory;
         _reservationRepository = reservationRepository;
         _productRepository = productRepository;
+        _logger = logger;
     }
 
-    public async Task<ReservationDto> ReserveProductsAsync(ProductReserveRequest request)
+    public async Task<ReservationDto> ReserveProductsAsync(ProductDbContext dbContext, ProductReserveRequest request)
     {
         var companyId = request.CompanyId;
         var quantity = request.QuantityOfFiltered;
@@ -26,7 +33,7 @@ public class ReservationService : IReservationService
         {
             // First, remove existing reservations for this company
             await _reservationRepository.UpdateReservationsAsync(companyId);
-            await DeleteReservationByUserIdAsync(companyId);
+            await DeleteReservationByUserIdAsync(dbContext, companyId);
 
             // Fetch only product IDs (no sensitive product data is returned)
             var productIds = await _productRepository.GetProductIdsForReservationAsync(request);
@@ -54,18 +61,18 @@ public class ReservationService : IReservationService
         return reservation != null ? ReservationFactory.CreateReservationDto(reservation) : null;
     }
 
-    public async Task<bool> DeleteReservationByUserIdAsync(Guid companyId)
+    public async Task<bool> DeleteReservationByUserIdAsync(ProductDbContext dbContext, Guid companyId)
     {
         var reservation = await _reservationRepository.GetReservationByUserIdAsync(companyId);
         if (reservation != null)
         {
-            await _reservationRepository.DeleteReservationAsync(reservation.ReservationId);
+            await _reservationRepository.DeleteReservationAsync(dbContext, reservation.ReservationId); // Pass dbContext to the repository method
             return true;
         }
         return false;
     }
 
-    private async Task ReleaseExpiredReservationsAsync()
+    private async Task ReleaseExpiredReservationsAsync(ProductDbContext dbContext)
     {
         // Get the current Stockholm time directly in the service
         var stockholmTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
@@ -74,9 +81,10 @@ public class ReservationService : IReservationService
         // Calculate the cutoff time (15 minutes and 2 seconds)
         var cutoffTime = stockholmTime.AddMinutes(-15).AddSeconds(-2);
 
-        // Call the repository to update expired reservations
-        await _reservationRepository.UpdateExpiredReservationsAsync(cutoffTime);
+        // Call the repository to update expired reservations, pass dbContext to the repository method
+        await _reservationRepository.UpdateExpiredReservationsAsync(dbContext, cutoffTime);
     }
+
 
     // Auto Cleanup Reservation Services
     private void StartReservationReleaseTimer(Guid companyId)
@@ -84,24 +92,34 @@ public class ReservationService : IReservationService
         _timer = new System.Timers.Timer(900000 + 3000); // 15 minutes + 3 seconds
         _timer.Elapsed += async (sender, e) => await TimerElapsedAsync(companyId);
         _timer.Start();
+        _logger.LogInformation("TIMER STARTED for Company ID: {CompanyId}", companyId);
     }
 
     private async Task TimerElapsedAsync(Guid companyId)
     {
         try
         {
-            await ReleaseExpiredReservationsAsync();
+            _logger.LogInformation("Timer Elapsed for Company ID: {CompanyId}. Executing cleanup.", companyId);
 
-            await DeleteReservationByUserIdAsync(companyId);
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+
+                // Execute your async methods here
+                await ReleaseExpiredReservationsAsync(dbContext);
+                await DeleteReservationByUserIdAsync(dbContext, companyId);
+            }
+
+            _logger.LogInformation("RESERVATIONS DELETED for Company ID: {CompanyId}.", companyId);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during timer elapsed: {ex.Message}");
+            _logger.LogError("Error during timer elapsed for Company ID: {CompanyId}: {ErrorMessage}", companyId, ex.Message);
         }
         finally
         {
+            _logger.LogInformation("Stopping timer for Company ID: {CompanyId}.", companyId);
             _timer.Stop();
-            _timer.Dispose();
         }
     }
 }

@@ -38,8 +38,8 @@ public class ReservationRepository : IReservationRepository
         using var connection = new SqlConnection(_connectionString);
         await connection.ExecuteAsync(sql, parameters);
     }
-    
-    public async Task UpdateExpiredReservationsAsync(DateTime cutoffTime)
+
+    public async Task UpdateExpiredReservationsAsync(ProductDbContext dbContext, DateTime cutoffTime)
     {
         using var connection = new SqlConnection(_connectionString);
 
@@ -50,6 +50,7 @@ public class ReservationRepository : IReservationRepository
 
         await connection.ExecuteAsync(sql, new { CutoffTime = cutoffTime });
     }
+
     public async Task UpdateReservationsAsync(Guid companyId)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -77,7 +78,7 @@ public class ReservationRepository : IReservationRepository
                              .FirstOrDefaultAsync(r => r.UserId == companyId);
     }
 
-    public async Task DeleteReservationAsync(Guid companyId)
+    public async Task DeleteReservationAsync(ProductDbContext dbContext, Guid companyId)
     {
         var reservation = await _context.Set<ReservationEntity>().FindAsync(companyId);
         if (reservation != null)

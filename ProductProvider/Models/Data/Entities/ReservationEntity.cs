@@ -13,6 +13,7 @@ public class ReservationEntity
     public Guid UserId { get; set; }
     public string? BusinessTypes { get; set; }
     public string? Regions { get; set; }
+    public string? CitiesByRegion { get; set; }
     public string? Cities { get; set; }
     public string? PostalCodes { get; set; }
     public int? MinRevenue { get; set; }
@@ -26,6 +27,5 @@ public class ReservationEntity
     [Required]
     public DateTime? ReservedTime { get; set; }
 
-    [Required]
     public DateTime? SoldTime { get; set; }
 }
