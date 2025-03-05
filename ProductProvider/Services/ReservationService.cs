@@ -2,6 +2,7 @@
 using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Interfaces.Services;
 using ProductProvider.Models;
+using ProductProvider.Models.Data;
 
 namespace ProductProvider.Services;
 
@@ -10,12 +11,14 @@ public class ReservationService : IReservationService
     private readonly IReservationRepository _reservationRepository;
     private readonly IProductRepository _productRepository;
     private System.Timers.Timer _timer;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<ReservationService> _logger;
 
-    public ReservationService(IReservationRepository reservationRepository, IProductRepository productRepository, ILogger<ReservationService> logger)
+    public ReservationService(IReservationRepository reservationRepository, IProductRepository productRepository, IServiceScopeFactory serviceScopeFactory, ILogger<ReservationService> logger)
     {
         _reservationRepository = reservationRepository;
         _productRepository = productRepository;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
     }
 
@@ -80,18 +83,14 @@ public class ReservationService : IReservationService
         }
     }
 
-    private async Task ReleaseExpiredReservationsAsync()
-    {
-        // Get the current Stockholm time directly in the service
-        var stockholmTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
-                TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
+    //private async Task ReleaseExpiredReservationsAsync(ProductDbContext context)
+    //{
+    //    var stockholmTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
+    //    var cutoffTime = stockholmTime.AddMinutes(-15).AddSeconds(-2);
 
-        // Calculate the cutoff time (15 minutes and 2 seconds)
-        var cutoffTime = stockholmTime.AddMinutes(-15).AddSeconds(-2);
-
-        // Call the repository to update expired reservations (deletes expired reservations from both tables)
-        await _reservationRepository.DeleteExpiredReservationsAsync(cutoffTime);
-    }
+    //    // Now using the passed context
+    //    await _reservationRepository.DeleteExpiredReservationsAsync(context, cutoffTime);
+    //}
     // Auto Cleanup Reservation Services
     private void StartReservationReleaseTimer(Guid companyId)
     {
@@ -109,7 +108,14 @@ public class ReservationService : IReservationService
         {
             _logger.LogInformation("Timer Elapsed for Company ID: {CompanyId}. Executing cleanup.", companyId);
 
-            await ReleaseExpiredReservationsAsync();
+            // Create a new scope for this operation to keep the context alive
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+
+                // Pass the context to the repository method
+                await _reservationRepository.DeleteExpiredReservationsAsync(context, DateTime.UtcNow, companyId);
+            }
 
             _logger.LogInformation("RESERVATIONS DELETED for Company ID: {CompanyId}.", companyId);
         }
@@ -123,4 +129,5 @@ public class ReservationService : IReservationService
             _timer?.Stop();
         }
     }
+
 }

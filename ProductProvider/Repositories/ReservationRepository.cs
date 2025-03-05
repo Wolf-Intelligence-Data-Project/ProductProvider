@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Models.Data;
 using ProductProvider.Models.Data.Entities;
@@ -38,47 +39,52 @@ public class ReservationRepository : IReservationRepository
         await connection.ExecuteAsync(sql, parameters);
     }
 
-    public async Task DeleteExpiredReservationsAsync(DateTime cutoffTime)
+    public async Task DeleteExpiredReservationsAsync(ProductDbContext context, DateTime cutoffTime, Guid companyId)
     {
-        // Start a transaction to ensure atomicity
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        using var transaction = await connection.BeginTransactionAsync();
+
         try
         {
-            // Execute SQL to update expired product reservations
-            using var connection = new SqlConnection(_connectionString);
-            string sql = @"
+            // Update expired products
+            string updateProductsSql = @"
             UPDATE Products
             SET ReservedUntil = NULL, ReservedBy = NULL
-            WHERE ReservedUntil < @CutoffTime";
+            WHERE ReservedUntil < @CutoffTime"; 
 
-            await connection.ExecuteAsync(sql, new { CutoffTime = cutoffTime });
+            int rowsAffected = await connection.ExecuteAsync(updateProductsSql, new { CutoffTime = cutoffTime }, transaction);
 
-            // Use Entity Framework to find expired reservations (based on ReservedTime)
-            var expiredReservations = await _context.Set<ReservationEntity>()
-                                                     .Where(r => r.ReservedTime < cutoffTime)
-                                                     .ToListAsync();
-
-            // Remove expired reservations
-            if (expiredReservations.Any())
+            // Check if any rows were updated
+            if (rowsAffected == 0)
             {
-                _context.Set<ReservationEntity>().RemoveRange(expiredReservations);
+                Console.WriteLine("No expired products were updated.");
             }
 
-            // Commit the transaction to save changes to both the Products and ReservationEntity tables
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync(); // Commit the transaction
+            // Delete expired reservations for the given company
+            string deleteReservationsSql = @"
+            DELETE FROM Reservations
+            WHERE UserId = @UserId"; 
 
+            int deletedRows = await connection.ExecuteAsync(deleteReservationsSql, new { UserId = companyId }, transaction);
+
+            // Optionally, check if any reservations were deleted
+            if (deletedRows == 0)
+            {
+                Console.WriteLine("No expired reservations were deleted.");
+            }
+
+            // Commit the transaction
+            await transaction.CommitAsync();
         }
         catch (Exception ex)
         {
             // Rollback the transaction in case of an error
             await transaction.RollbackAsync();
-            // Log the error (optional)
             Console.WriteLine($"Error: {ex.Message}");
             throw;
         }
     }
-
 
     public async Task UpdateReservationsAsync(Guid companyId)
     {
