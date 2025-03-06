@@ -1,4 +1,5 @@
-﻿using ProductProvider.Factories;
+﻿using Microsoft.Extensions.Options;
+using ProductProvider.Factories;
 using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Interfaces.Services;
 using ProductProvider.Models;
@@ -13,12 +14,14 @@ public class ReservationService : IReservationService
     private System.Timers.Timer _timer;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<ReservationService> _logger;
+    private readonly IOptions<PriceSettings> _priceSettings;
 
-    public ReservationService(IReservationRepository reservationRepository, IProductRepository productRepository, IServiceScopeFactory serviceScopeFactory, ILogger<ReservationService> logger)
+    public ReservationService(IReservationRepository reservationRepository, IProductRepository productRepository, IServiceScopeFactory serviceScopeFactory, IOptions<PriceSettings> priceSettings, ILogger<ReservationService> logger)
     {
         _reservationRepository = reservationRepository;
         _productRepository = productRepository;
         _serviceScopeFactory = serviceScopeFactory;
+        _priceSettings = priceSettings;
         _logger = logger;
     }
 
@@ -50,12 +53,52 @@ public class ReservationService : IReservationService
 
         return null!;
     }
+    private (decimal priceWithoutVat, decimal totalPrice) CalculatePrice(int count)
+    {
+        // Get price and VAT rate from configuration
+        decimal pricePerProduct = _priceSettings.Value.PricePerProduct; // SEK per product
+        decimal vatRate = _priceSettings.Value.VatRate; // VAT rate (e.g., 25 for 25%)
+
+        // Ensure price settings are being loaded
+        if (pricePerProduct <= 0 || vatRate <= 0)
+        {
+            _logger.LogError("Invalid price settings: PricePerProduct = {PricePerProduct}, VatRate = {VatRate}",
+                pricePerProduct, vatRate);
+            throw new InvalidOperationException("Invalid price settings.");
+        }
+
+        // Calculate the total price before VAT
+        decimal baseTotalPrice = count * pricePerProduct;
+
+        // Calculate the total price after VAT
+        decimal totalPriceWithVat = baseTotalPrice * (1 + vatRate / 100); // Apply VAT to total price
+
+        return (baseTotalPrice, totalPriceWithVat);
+    }
 
     public async Task<ReservationDto> GetReservationByUserIdAsync(Guid companyId)
     {
         var reservation = await _reservationRepository.GetReservationByUserIdAsync(companyId);
-        return reservation != null ? ReservationFactory.CreateReservationDto(reservation) : null;
+
+        if (reservation == null)
+        {
+            return null;
+        }
+
+        // Calculate prices based on reservation quantity
+        var (priceWithoutVat, totalPriceWithVat) = CalculatePrice(reservation.Quantity);
+
+        // Create ReservationDto and include calculated prices
+        var reservationDto = ReservationFactory.CreateReservationDto(reservation);
+
+        // Add the calculated prices to the ReservationDto
+        reservationDto.PriceWithoutVat = priceWithoutVat;
+        reservationDto.TotalPrice = totalPriceWithVat;
+
+        return reservationDto;
+
     }
+
 
     private async Task<bool> DeleteReservationByUserIdAsync(Guid companyId)
     {
@@ -85,7 +128,7 @@ public class ReservationService : IReservationService
 
     //private async Task ReleaseExpiredReservationsAsync(ProductDbContext context)
     //{
-    //    var stockholmTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
+    //    var stockholmTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Time"));
     //    var cutoffTime = stockholmTime.AddMinutes(-15).AddSeconds(-2);
 
     //    // Now using the passed context
@@ -112,9 +155,10 @@ public class ReservationService : IReservationService
             using (var scope = _serviceScopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+                var cutoffTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Time")).AddMinutes(-15.2);
 
                 // Pass the context to the repository method
-                await _reservationRepository.DeleteExpiredReservationsAsync(context, DateTime.UtcNow, companyId);
+                await _reservationRepository.DeleteExpiredReservationsAsync(context, cutoffTime, companyId);
             }
 
             _logger.LogInformation("RESERVATIONS DELETED for Company ID: {CompanyId}.", companyId);

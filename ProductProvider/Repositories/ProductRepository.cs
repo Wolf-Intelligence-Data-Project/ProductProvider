@@ -25,7 +25,7 @@ public class ProductRepository : IProductRepository
     //using dapper for better performance 
     public async Task<int> GetFilteredProductsCountAsync(ProductFilterRequest filters)
     {
-        var query = new StringBuilder("SELECT COUNT(*) FROM Products WHERE SoldUntil IS NULL AND ReservedUntil IS NULL");
+        var query = new StringBuilder("SELECT COUNT(*) FROM Products WHERE CustomerId IS NULL");
 
         var parameters = new DynamicParameters();
 

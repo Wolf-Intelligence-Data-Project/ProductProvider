@@ -10,7 +10,7 @@ public class ReservationEntity
     public Guid ReservationId { get; set; }  // Primary key for this table
 
     [Required]
-    public Guid UserId { get; set; }
+    public Guid CustomerId { get; set; }
     public string? BusinessTypes { get; set; }
     public string? Regions { get; set; }
     public string? CitiesByRegion { get; set; }
@@ -25,7 +25,7 @@ public class ReservationEntity
     public int Quantity { get; set; }
 
     [Required]
-    public DateTime? ReservedTime { get; set; }
+    public DateTime? ReservedFrom { get; set; }
 
-    public DateTime? SoldTime { get; set; }
+    public DateTime? SoldFrom { get; set; }
 }

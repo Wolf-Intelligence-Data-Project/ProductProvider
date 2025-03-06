@@ -17,11 +17,10 @@ public class ProductEntity
     public string PhoneNumber { get; set; }
     public string Email { get; set; }
     public string BusinessType { get; set; }
-    public decimal Revenue { get; set; }
+    public int Revenue { get; set; }
     public int NumberOfEmployees { get; set; }
     public string CEO { get; set; }
     public DateTime? SoldUntil { get; set; }  // When the product is no longer available
-    public Guid? SoldTo { get; set; }  // User ID who bought the product
-    public DateTime? ReservedUntil { get; set; }  // How long it’s reserved
-    public Guid? ReservedBy { get; set; }  // User ID who reserved the product
+    public Guid? CustomerId { get; set; } // User ID who reserved/bought the product (reserved means that it is shopping cart / checkout which lasts max for 15 minutes)
+    public DateTime? ReservedUntil { get; set; }  // How long it’s reservedz
 }

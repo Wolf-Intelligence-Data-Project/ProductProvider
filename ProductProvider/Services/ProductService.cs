@@ -113,11 +113,11 @@ public class ProductService : IProductService
                 var phoneNumber = worksheet.Cells[row, 6].Text?.Trim();
                 var email = worksheet.Cells[row, 7].Text?.Trim();
                 var businessType = worksheet.Cells[row, 8].Text?.Trim();
-                var revenue = decimal.TryParse(worksheet.Cells[row, 9].Text, out var rev) ? rev : 0;
+                var revenue = int.TryParse(worksheet.Cells[row, 9].Text, out var rev) ? rev : 0;
                 var employees = int.TryParse(worksheet.Cells[row, 10].Text, out var emp) ? emp : 0;
                 var ceo = worksheet.Cells[row, 11].Text?.Trim();
 
-                // No need to parse ReservedBy and SoldTo, they will stay null
+                // No need to parse CustomerId they will stay null
                 var product = new ProductEntity
                 {
                     ProductId = Guid.NewGuid(),
@@ -132,8 +132,7 @@ public class ProductService : IProductService
                     Revenue = revenue,
                     NumberOfEmployees = employees,
                     CEO = ceo,
-                    ReservedBy = null,  // Explicitly set to null
-                    SoldTo = null,      // Explicitly set to null
+                    CustomerId = null,  // Explicitly set to null
                     ReservedUntil = null, // Ensure null for ReservedUntil as well
                     SoldUntil = null     // Ensure null for SoldUntil as well
                 };

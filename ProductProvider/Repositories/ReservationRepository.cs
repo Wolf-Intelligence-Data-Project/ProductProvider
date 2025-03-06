@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Models.Data;
 using ProductProvider.Models.Data.Entities;
@@ -12,7 +11,7 @@ public class ReservationRepository : IReservationRepository
 {
     private readonly ProductDbContext _context;
     private readonly string _connectionString;
-
+   
     public ReservationRepository(ProductDbContext context, IConfiguration configuration)
     {
         _context = context;
@@ -26,13 +25,12 @@ public class ReservationRepository : IReservationRepository
     {
         var sql = @"
             UPDATE Products
-            SET ReservedBy = @CompanyId, ReservedUntil = @ReservedUntil
+            SET CustomerId = @CompanyId, ReservedUntil = @ReservedUntil
             WHERE ProductId IN (SELECT value FROM STRING_SPLIT(@ProductIds, ','))";
-
+        
         var parameters = new DynamicParameters();
         parameters.Add("CompanyId", companyId);
-        parameters.Add("ReservedUntil", TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
-            TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")).AddMinutes(15));
+        parameters.Add("ReservedUntil", TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Time")).AddMinutes(15));
         parameters.Add("ProductIds", string.Join(",", productIds));
 
         using var connection = new SqlConnection(_connectionString);
@@ -50,7 +48,7 @@ public class ReservationRepository : IReservationRepository
             // Update expired products
             string updateProductsSql = @"
             UPDATE Products
-            SET ReservedUntil = NULL, ReservedBy = NULL
+            SET ReservedUntil = NULL, CustomerId = NULL
             WHERE ReservedUntil < @CutoffTime"; 
 
             int rowsAffected = await connection.ExecuteAsync(updateProductsSql, new { CutoffTime = cutoffTime }, transaction);
@@ -64,7 +62,7 @@ public class ReservationRepository : IReservationRepository
             // Delete expired reservations for the given company
             string deleteReservationsSql = @"
             DELETE FROM Reservations
-            WHERE UserId = @UserId"; 
+            WHERE CustomerId = @UserId"; 
 
             int deletedRows = await connection.ExecuteAsync(deleteReservationsSql, new { UserId = companyId }, transaction);
 
@@ -92,8 +90,8 @@ public class ReservationRepository : IReservationRepository
 
         string sql = @"
         UPDATE Products
-        SET ReservedUntil = NULL, ReservedBy = NULL
-        WHERE Reservedby = @UserId";
+        SET ReservedUntil = NULL, CustomerId = NULL
+        WHERE CustomerId = @UserId";
 
         await connection.ExecuteAsync(sql, new { UserId = companyId });
 
@@ -112,7 +110,7 @@ public class ReservationRepository : IReservationRepository
     public async Task<ReservationEntity> GetReservationByUserIdAsync(Guid companyId)
     {
         return await _context.Set<ReservationEntity>()
-                             .FirstOrDefaultAsync(r => r.UserId == companyId);
+                             .FirstOrDefaultAsync(r => r.CustomerId == companyId);
     }
     public async Task DeleteReservationImmediatelyAsync(Guid reservationId)
     {

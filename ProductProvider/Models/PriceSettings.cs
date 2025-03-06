@@ -6,6 +6,4 @@
         public decimal PricePerProduct { get; set; }
         public decimal VatRate { get; set; }
     }
-   
-
 }

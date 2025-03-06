@@ -48,6 +48,9 @@ namespace ProductProvider.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -67,24 +70,18 @@ namespace ProductProvider.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("ReservedBy")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime?>("ReservedUntil")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("Revenue")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<Guid?>("SoldTo")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("Revenue")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("SoldUntil")
                         .HasColumnType("datetime2");
 
                     b.HasKey("ProductId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("ProductProvider.Models.Data.Entities.ReservationEntity", b =>
@@ -101,6 +98,9 @@ namespace ProductProvider.Migrations
 
                     b.Property<string>("CitiesByRegion")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("MaxNumberOfEmployees")
                         .HasColumnType("int");
@@ -123,18 +123,15 @@ namespace ProductProvider.Migrations
                     b.Property<string>("Regions")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("ReservedTime")
+                    b.Property<DateTime>("ReservedFrom")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("SoldTime")
+                    b.Property<DateTime?>("SoldFrom")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ReservationId");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 #pragma warning restore 612, 618
         }
