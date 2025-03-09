@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using ProductProvider.Interfaces.Services;
+using ProductProvider.Services.Services;
 using ProductProvider.Models;
 
 namespace ProductProvider.Controllers;
 
-[Authorize]
 [Route("api/products")]
 [ApiController]
 public class ProductController : ControllerBase

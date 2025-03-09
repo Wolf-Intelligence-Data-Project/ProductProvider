@@ -1,4 +1,4 @@
-﻿using ProductProvider.Interfaces;
+﻿using ProductProvider.Services;
 using System;
 using System.Text;
 using System.Threading.Tasks;

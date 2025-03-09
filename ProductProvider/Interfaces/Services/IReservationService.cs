@@ -1,7 +1,7 @@
 ﻿using ProductProvider.Models;
 using ProductProvider.Models.Data;
 
-namespace ProductProvider.Interfaces.Services;
+namespace ProductProvider.Services.Services;
 
 public interface IReservationService
 {

@@ -1,7 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ProductProvider.Interfaces.Repositories;
+using ProductProvider.Services.Repositories;
 using ProductProvider.Models.Data;
 using ProductProvider.Models.Data.Entities;
 

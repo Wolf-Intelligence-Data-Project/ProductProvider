@@ -1,6 +1,6 @@
 ﻿using ProductProvider.Models.Data.Entities;
 
-namespace ProductProvider.Interfaces.Services;
+namespace ProductProvider.Services.Services;
 
 public interface IBusinessTypeService
 {
@@ -18,4 +18,9 @@ public interface IBusinessTypeService
     /// <param name="businessTypeFilter">The business type filter input.</param>
     /// <returns>Filtered IQueryable of ProductEntity.</returns>
     IQueryable<ProductEntity> FilterByBusinessType(IQueryable<ProductEntity> products, string businessTypeFilter);
+
+    Task<IEnumerable<object>> GetAvailableBusinessTypes();
+
+
+    Task<IEnumerable<string>> GetAvailableCities();
 }

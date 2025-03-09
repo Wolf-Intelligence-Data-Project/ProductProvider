@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProductProvider.Repositories;
 using ProductProvider.GraphQL;
-using ProductProvider.Interfaces;
+using ProductProvider.Services;
 using ProductProvider.Models.Data;
 using ProductProvider.Messages;
 using Microsoft.AspNetCore.Http.Features;
@@ -9,9 +9,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using ProductProvider.Interfaces.Repositories;
-using ProductProvider.Interfaces.Services;
+using ProductProvider.Services.Repositories;
+using ProductProvider.Services.Services;
 using ProductProvider.Models;
+using ProductProvider.Services.Services;
 using ProductProvider.Services;
 
 var builder = WebApplication.CreateBuilder(args);

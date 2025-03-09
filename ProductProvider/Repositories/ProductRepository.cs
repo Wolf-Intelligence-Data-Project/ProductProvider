@@ -6,26 +6,29 @@ using ProductProvider.Models;
 using Microsoft.Data.SqlClient;
 using System.Text;
 using System.Text.RegularExpressions;
-using ProductProvider.Interfaces.Repositories;
+using ProductProvider.Services.Repositories;
+using ProductProvider.Services;
 
 namespace ProductProvider.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly ProductDbContext _context;
+    private readonly ProductDbContext _productDbContext;
     private readonly string _connectionString;
-    
+    private readonly ILogger<BusinessTypeService> _logger;
 
-    public ProductRepository(ProductDbContext context, IConfiguration configuration)
+
+    public ProductRepository(ProductDbContext productDbContext, IConfiguration configuration, ILogger<BusinessTypeService> logger)
     {
-        _context = context;
+        _productDbContext = productDbContext;
         _connectionString = configuration.GetConnectionString("ProductDatabase");
+        _logger = logger;
     }
 
     //using dapper for better performance 
     public async Task<int> GetFilteredProductsCountAsync(ProductFilterRequest filters)
     {
-        var query = new StringBuilder("SELECT COUNT(*) FROM Products WHERE CustomerId IS NULL");
+        var query = new StringBuilder("SELECT COUNT(*) FROM Products WHERE CustomerId IS NULL AND ReservedUntil IS NULL AND SoldUntil IS NULL");
 
         var parameters = new DynamicParameters();
 
@@ -145,10 +148,60 @@ public class ProductRepository : IProductRepository
         using var connection = new SqlConnection(_connectionString);
         return (await connection.QueryAsync<Guid>(sql, parameters)).ToList();
     }
-    
+
+    public async Task<IEnumerable<string>> GetAvailableBusinessTypes()
+    {
+        string sql = @"
+            SELECT DISTINCT LEFT(REPLACE(BusinessType, ' ', ''), CHARINDEX('.', BusinessType + '.') - 1) 
+            FROM Products
+            WHERE BusinessType IS NOT NULL AND CHARINDEX('.', BusinessType) > 0";
+
+        try
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var result = await connection.QueryAsync<string>(sql);
+
+            // Log the result
+            _logger.LogInformation("Fetched Business Types: {BusinessTypes}", string.Join(", ", result));
+
+            return result.Where(bt => !string.IsNullOrEmpty(bt)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while fetching business types.");
+            throw;
+        }
+    }
+    public async Task<IEnumerable<string>> GetAvailableCities()
+    {
+        string sql = @"
+        SELECT DISTINCT City 
+        FROM Products
+        WHERE City IS NOT NULL AND City <> ''";
+
+        try
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var result = await connection.QueryAsync<string>(sql);
+
+            // Log the result
+            _logger.LogInformation("Fetched Cities: {Cities}", string.Join(", ", result));
+
+            return result.Where(city => !string.IsNullOrEmpty(city)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while fetching cities.");
+            throw;
+        }
+    }
     public async Task AddProductsAsync(List<ProductEntity> products)
     {
-        await _context.Products.AddRangeAsync(products);
-        await _context.SaveChangesAsync();
+        await _productDbContext.Products.AddRangeAsync(products);
+        await _productDbContext.SaveChangesAsync();
     }
 }

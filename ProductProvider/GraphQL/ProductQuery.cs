@@ -1,7 +1,7 @@
 ﻿using GraphQL;
 using GraphQL.Types;
 using ProductProvider.Models;
-using ProductProvider.Interfaces.Services;
+using ProductProvider.Services.Services;
 
 namespace ProductProvider.GraphQL;
 

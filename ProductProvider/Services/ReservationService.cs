@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using ProductProvider.Factories;
-using ProductProvider.Interfaces.Repositories;
-using ProductProvider.Interfaces.Services;
+using ProductProvider.Services.Repositories;
+using ProductProvider.Services.Services;
 using ProductProvider.Models;
 using ProductProvider.Models.Data;
 

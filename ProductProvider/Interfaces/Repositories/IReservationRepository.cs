@@ -1,7 +1,7 @@
 ﻿using ProductProvider.Models.Data;
 using ProductProvider.Models.Data.Entities;
 
-namespace ProductProvider.Interfaces.Repositories;
+namespace ProductProvider.Services.Repositories;
 
 public interface IReservationRepository
 {

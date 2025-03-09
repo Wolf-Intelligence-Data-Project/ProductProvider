@@ -2,9 +2,9 @@
 using ProductProvider.Models.Data.Entities;
 using OfficeOpenXml;
 using Microsoft.Extensions.Options;
-using ProductProvider.Interfaces.Repositories;
-using ProductProvider.Interfaces.Services;
-using ProductProvider.Interfaces;
+using ProductProvider.Services.Repositories;
+using ProductProvider.Services.Services;
+using ProductProvider.Services;
 
 namespace ProductProvider.Services;
 
