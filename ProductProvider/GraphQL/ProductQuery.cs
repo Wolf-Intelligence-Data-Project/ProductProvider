@@ -1,7 +1,8 @@
 ﻿using GraphQL;
 using GraphQL.Types;
 using ProductProvider.Models;
-using ProductProvider.Services.Services;
+using ProductProvider.Interfaces.Services;
+using ProductProvider.Models.Data.Entities;
 
 namespace ProductProvider.GraphQL;
 
@@ -47,19 +48,19 @@ public class ProductQuery : ObjectGraphType
             });
     }
 
-    //public class ProductType : ObjectGraphType<ProductEntity>
-    //{
-    //    public ProductType()
-    //    {
-    //        Field(x => x.ProductId);
-    //        Field(x => x.CompanyName);
-    //        Field(x => x.BusinessType);
-    //        Field(x => x.Revenue);
-    //        Field(x => x.NumberOfEmployees);
-    //        Field(x => x.PhoneNumber);
-    //        Field(x => x.Address);
-    //        Field(x => x.City); 
-    //        Field(x => x.PostalCode); 
-    //    }
-    //}
+    public class ProductType : ObjectGraphType<ProductEntity>
+    {
+        public ProductType()
+        {
+            Field(x => x.ProductId);
+            Field(x => x.CompanyName);
+            Field(x => x.BusinessType);
+            Field(x => x.Revenue);
+            Field(x => x.NumberOfEmployees);
+            Field(x => x.PhoneNumber);
+            Field(x => x.Address);
+            Field(x => x.City);
+            Field(x => x.PostalCode);
+        }
+    }
 }

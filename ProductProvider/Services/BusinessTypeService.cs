@@ -1,10 +1,10 @@
 ﻿using ProductProvider.Models.Data.Entities;
 using ProductProvider.Models.SNI_codes;
 using System.ComponentModel;
-using ProductProvider.Services.Repositories;
-using ProductProvider.Services.Services;
+using ProductProvider.Interfaces.Services;
+using ProductProvider.Interfaces.Repositories;
 
-namespace ProductProvider.Services;
+namespace ProductProvider.Interfaces;
 public class BusinessTypeService : IBusinessTypeService
 {
     private readonly IProductRepository _productRepository;

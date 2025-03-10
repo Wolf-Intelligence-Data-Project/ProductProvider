@@ -1,6 +1,6 @@
 ﻿using ProductProvider.Models.Data.Entities;
 
-namespace ProductProvider.Services.Services;
+namespace ProductProvider.Interfaces.Services;
 
 public interface IBusinessTypeService
 {
@@ -20,7 +20,6 @@ public interface IBusinessTypeService
     IQueryable<ProductEntity> FilterByBusinessType(IQueryable<ProductEntity> products, string businessTypeFilter);
 
     Task<IEnumerable<object>> GetAvailableBusinessTypes();
-
 
     Task<IEnumerable<string>> GetAvailableCities();
 }

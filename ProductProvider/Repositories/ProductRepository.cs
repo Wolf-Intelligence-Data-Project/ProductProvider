@@ -6,8 +6,8 @@ using ProductProvider.Models;
 using Microsoft.Data.SqlClient;
 using System.Text;
 using System.Text.RegularExpressions;
-using ProductProvider.Services.Repositories;
-using ProductProvider.Services;
+using ProductProvider.Interfaces;
+using ProductProvider.Interfaces.Repositories;
 
 namespace ProductProvider.Repositories;
 

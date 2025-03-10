@@ -1,7 +1,7 @@
 ﻿using ProductProvider.Models.Data.Entities;
 using ProductProvider.Models;
 
-namespace ProductProvider.Services.Services;
+namespace ProductProvider.Interfaces.Services;
 
 public interface IElasticSearchService
 {

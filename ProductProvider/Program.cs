@@ -1,18 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using ProductProvider.Repositories;
 using ProductProvider.GraphQL;
-using ProductProvider.Services;
+using ProductProvider.Interfaces;
 using ProductProvider.Models.Data;
-using ProductProvider.Messages;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using ProductProvider.Services.Repositories;
-using ProductProvider.Services.Services;
+using ProductProvider.Interfaces.Services;
 using ProductProvider.Models;
-using ProductProvider.Services.Services;
+using ProductProvider.Interfaces.Repositories;
 using ProductProvider.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -111,10 +109,7 @@ builder.Services.Configure<PriceSettings>(builder.Configuration.GetSection("Pric
 builder.Services.AddScoped<IBusinessTypeService, BusinessTypeService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IMessageBus, RabbitMQMessageBus>();
-
-builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
-builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddSingleton<IPriceSettingsService, PriceSettingsService>();
 
 // Set up DbContext for ProductDbContext
 builder.Services.AddDbContext<ProductDbContext>(options =>

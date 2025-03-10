@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ProductProvider.Services.Services;
+using ProductProvider.Interfaces.Services;
 
 namespace ProductProvider.Controllers;
 
@@ -28,21 +28,4 @@ public class BusinessTypeController : ControllerBase
         var types = await _businessTypeService.GetAvailableCities();
         return Ok(types);
     }
-
-    //// Endpoint to get Business Categories (e.g., "A", "B", etc.)
-    //[HttpGet("business-categories")]
-    //public IActionResult GetBusinessCategories()
-    //{
-    //    var categories = GetCategoriesWithDescription();
-    //    return Ok(categories);
-    //}
-
-    //// Helper method to get Categories with Descriptions
-    //public static List<KeyValuePair<int, string>> GetCategoriesWithDescription()
-    //{
-    //    return Enum.GetValues(typeof(BusinessCategory))
-    //               .Cast<BusinessCategory>()
-    //               .Select(e => new KeyValuePair<int, string>((int)e, GetEnumDescription(e)))
-    //               .ToList();
-    //}
 }

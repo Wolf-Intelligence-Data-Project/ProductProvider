@@ -2,25 +2,21 @@
 using ProductProvider.Models.Data.Entities;
 using OfficeOpenXml;
 using Microsoft.Extensions.Options;
-using ProductProvider.Services.Repositories;
-using ProductProvider.Services.Services;
-using ProductProvider.Services;
+using ProductProvider.Interfaces.Services;
+using ProductProvider.Interfaces.Repositories;
 
 namespace ProductProvider.Services;
 
 public class ProductService : IProductService
 {
     private readonly IProductRepository _productRepository;
-    private readonly IMessageBus _messageBus;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IOptions<PriceSettings> _priceSettings;
     private readonly ILogger<ProductService> _logger;
 
-    private System.Timers.Timer _timer;
-    public ProductService(IProductRepository productRepository, IMessageBus messageBus, ILogger<ProductService> logger,IOptions<PriceSettings> priceSettings)
+    public ProductService(IProductRepository productRepository, ILogger<ProductService> logger,IOptions<PriceSettings> priceSettings)
     {
         _productRepository = productRepository;
-        _messageBus = messageBus;
         _priceSettings = priceSettings;
         _logger = logger;
     }
@@ -164,12 +160,4 @@ public class ProductService : IProductService
             }
         }
     }
-
-    // Publish product reservation event to RabbitMQ (without sensitive product details)
-    //await _messageBus.PublishAsync("ProductReserved", new
-    //{
-    //    UserId = companyId,
-    //    ReservedProductIds = productIds  // Send only product IDs in the event
-    //});
-
 }
