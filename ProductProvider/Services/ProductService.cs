@@ -32,33 +32,29 @@ public class ProductService : IProductService
             filters.MinNumberOfEmployees?.ToString() ?? "null",
             filters.MaxNumberOfEmployees?.ToString() ?? "null");
 
-        // Get the count from the repository
         var count = await _productRepository.GetFilteredProductsCountAsync(filters);
 
-        
-        // Ensure QuantityOfFiltered is required
+
         if (filters.QuantityOfFiltered > 0)
         {
             count = Math.Min(count, filters.QuantityOfFiltered);
         }
 
-        // Get price and VAT rate from configuration
         decimal pricePerProduct = _priceSettings.Value.PricePerProduct; // SEK per product
         decimal vatRate = _priceSettings.Value.VatRate; // VAT rate (e.g., 25 for 25%)
-        // Ensure price settings are being loaded
+
         if (pricePerProduct <= 0 || vatRate <= 0)
         {
             _logger.LogError("Invalid price settings: PricePerProduct = {PricePerProduct}, VatRate = {VatRate}",
                 pricePerProduct, vatRate);
             throw new InvalidOperationException("Invalid price settings.");
         }
-        // Calculate the total price before VAT
+
         decimal baseTotalPrice = count * pricePerProduct;
 
-        // Calculate the total price after VAT
-        decimal totalPriceWithVat = baseTotalPrice * (1 + vatRate / 100); // Apply VAT to total price
 
-        // Return the response model
+        decimal totalPriceWithVat = baseTotalPrice * (1 + vatRate / 100);
+
         return new ProductFilterResponse
         {
             AvailableQuantity = count,
@@ -74,7 +70,7 @@ public class ProductService : IProductService
             throw new ArgumentException("The uploaded file is empty or null.");
         }
 
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // Fix for EPPlus License Issue
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
         using var stream = new MemoryStream();
         await file.CopyToAsync(stream);
@@ -113,7 +109,6 @@ public class ProductService : IProductService
                 var employees = int.TryParse(worksheet.Cells[row, 10].Text, out var emp) ? emp : 0;
                 var ceo = worksheet.Cells[row, 11].Text?.Trim();
 
-                // No need to parse CustomerId they will stay null
                 var product = new ProductEntity
                 {
                     ProductId = Guid.NewGuid(),
@@ -128,9 +123,9 @@ public class ProductService : IProductService
                     Revenue = revenue,
                     NumberOfEmployees = employees,
                     CEO = ceo,
-                    CustomerId = null,  // Explicitly set to null
-                    ReservedUntil = null, // Ensure null for ReservedUntil as well
-                    SoldUntil = null     // Ensure null for SoldUntil as well
+                    CustomerId = null,  
+                    ReservedUntil = null,
+                    SoldUntil = null
                 };
 
                 productsToAdd.Add(product);
@@ -152,7 +147,6 @@ public class ProductService : IProductService
 
         if (errors.Any())
         {
-            // Log the errors for debugging
             Console.WriteLine("Errors occurred during import:");
             foreach (var error in errors)
             {

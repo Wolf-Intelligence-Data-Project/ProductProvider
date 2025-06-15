@@ -90,6 +90,6 @@ public class BusinessTypeService : IBusinessTypeService
         var availableCities = await _productRepository.GetAvailableCities();
         Console.WriteLine("Fetched cities from DB: " + string.Join(", ", availableCities));
 
-        return availableCities.Distinct().ToList(); // ✅ Returns unique cities
+        return availableCities.Distinct().ToList();
     }
 }

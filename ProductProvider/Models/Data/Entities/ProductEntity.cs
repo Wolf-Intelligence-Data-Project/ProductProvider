@@ -19,7 +19,7 @@ public class ProductEntity
     public int Revenue { get; set; }
     public int NumberOfEmployees { get; set; }
     public string CEO { get; set; }
-    public DateTime? SoldUntil { get; set; }  // When the product is no longer available
-    public Guid? CustomerId { get; set; } // User ID who reserved/bought the product (reserved means that it is shopping cart / checkout which lasts max for 15 minutes)
-    public DateTime? ReservedUntil { get; set; }  // How long it’s reservedz
+    public DateTime? SoldUntil { get; set; }
+    public Guid? CustomerId { get; set; } 
+    public DateTime? ReservedUntil { get; set; } 
 }

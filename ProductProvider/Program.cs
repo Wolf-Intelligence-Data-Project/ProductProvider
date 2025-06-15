@@ -15,13 +15,11 @@ using ProductProvider.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 
-// Configure Swagger/OpenAPI (optional)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddLogging();
-// Access Token Validation
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {
@@ -34,7 +32,7 @@ builder.Services.AddAuthentication("Bearer")
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtAccess:Key"])),
             ValidIssuer = builder.Configuration["JwtAccess:Issuer"],
             ValidAudience = builder.Configuration["JwtAccess:Audience"],
-            ClockSkew = TimeSpan.Zero, // No clock skew for strict expiration checks
+            ClockSkew = TimeSpan.Zero,
         };
 
         options.Events = new JwtBearerEvents
@@ -44,7 +42,7 @@ builder.Services.AddAuthentication("Bearer")
                 var token = context.HttpContext.Request.Cookies["AccessToken"];
                 if (!string.IsNullOrEmpty(token))
                 {
-                    context.Token = token; // Set the token from the cookie for validation
+                    context.Token = token;
                 }
                 return Task.CompletedTask;
             },
@@ -54,7 +52,7 @@ builder.Services.AddAuthentication("Bearer")
 
                 if (claimsIdentity == null)
                 {
-                    context.Fail("Token är ogiltigt. Claims identity är null."); // Swedish message
+                    context.Fail("Token är ogiltigt. Claims identity är null.");
                     return Task.CompletedTask;
                 }
 
@@ -63,17 +61,16 @@ builder.Services.AddAuthentication("Bearer")
 
                 if (isVerifiedClaim == null)
                 {
-                    context.Fail("Token är ogiltigt. Kontot är inte verifiead."); // Swedish message
+                    context.Fail("Token är ogiltigt. Kontot är inte verifiead.");
                     return Task.CompletedTask;
                 }
 
                 if (isVerifiedClaim.Value != "true")
                 {
-                    context.Fail("Token är ogiltigt. Användaren är inte verifierad."); // Swedish message
+                    context.Fail("Token är ogiltigt. Användaren är inte verifierad.");
                     return Task.CompletedTask;
                 }
 
-                // Log success after validation (log only non-sensitive data)
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 logger.LogInformation("Token validerades framgångsrikt för användare {UserName}.", claimsIdentity.Name);
 
@@ -81,9 +78,8 @@ builder.Services.AddAuthentication("Bearer")
             },
             OnAuthenticationFailed = context =>
             {
-                // Log the error, including stack trace for better diagnostics
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogError($"Autentisering misslyckades: {context.Exception.Message}"); // Swedish message
+                logger.LogError($"Autentisering misslyckades: {context.Exception.Message}");
                 if (context.Exception.StackTrace != null)
                 {
                     logger.LogError(context.Exception.StackTrace);
@@ -105,26 +101,18 @@ builder.Services.Configure<FormOptions>(options =>
 builder.Services.Configure<PriceSettings>(builder.Configuration.GetSection("PriceSettings"));
 
 
-// Register repositories and services
 builder.Services.AddScoped<IBusinessTypeService, BusinessTypeService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddSingleton<IPriceSettingsService, PriceSettingsService>();
 
-// Set up DbContext for ProductDbContext
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ProductDatabase")));
 
-// Set up DbContext for ReservationDbContext
-builder.Services.AddDbContext<ProductDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ProductDatabase")));
-
-// Add GraphQL services
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<ProductQuery>();
 
-// Add CORS configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -135,14 +123,13 @@ builder.Services.AddCors(options =>
 });
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");  // Apply the CORS policy globally
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
